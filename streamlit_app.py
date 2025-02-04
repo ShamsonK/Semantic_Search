@@ -5,7 +5,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 
 # Load Dataset
-csv_file = r"C:\Users\Samson\Desktop\Seamantic Search\myntra_products_catalog.csv"  
+csv_file = r"C:\Users\Samson\Downloads\myntra_products_catalog.csv"  
 df = pd.read_csv(csv_file).loc[:499]  # Limiting rows for efficiency
 
 # Select Relevant Columns (Modify Based on Your Dataset)
