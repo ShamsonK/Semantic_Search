@@ -6,7 +6,7 @@ from sentence_transformers import SentenceTransformer
 
 # Load Dataset
 csv_file = r"C:\Users\Samson\Desktop\Seamantic Search\myntra_products_catalog.csv"  
-df = pd.read_csv(csv_file).loc[:499]
+df = pd.read_csv(csv_file).loc[:499]  # Limiting rows for efficiency
 
 # Select Relevant Columns (Modify Based on Your Dataset)
 text_column = "Description"  # Change this if needed
@@ -22,12 +22,19 @@ df[text_column] = df[text_column].fillna("")
 df[title_column] = df[title_column].fillna("Unknown Product")
 
 # Load Pretrained Embedding Model
-model = SentenceTransformer("all-MiniLM-L6-v2")
+try:
+    model = SentenceTransformer("all-MiniLM-L6-v2")
+except Exception as e:
+    st.error(f"Error loading model: {e}")
+    st.stop()
 
 # Convert Product Descriptions to Embeddings
 st.info("Processing dataset and creating search index...")
 corpus = df[text_column].astype(str).tolist()
 corpus_embeddings = model.encode(corpus, convert_to_numpy=True)
+
+# Normalize embeddings for better performance in FAISS (optional but recommended)
+faiss.normalize_L2(corpus_embeddings)
 
 # Create FAISS Index
 dimension = corpus_embeddings.shape[1]
@@ -37,6 +44,8 @@ index.add(corpus_embeddings)
 # Function to Perform Semantic Search
 def semantic_search(query, top_k=5):
     query_embedding = model.encode([query], convert_to_numpy=True)
+    faiss.normalize_L2(query_embedding)  # Normalize query embedding
+    
     distances, indices = index.search(query_embedding, top_k)
     
     results = []
@@ -62,7 +71,7 @@ if st.button("Search"):
         st.subheader("🔎 Search Results:")
         
         for i, (title, description, score) in enumerate(results):
-            st.write(f"**{i+1}. {title}**  \n_Description: {description}_  \n_Similarity Score: {score:.4f}_")
+            st.write(f"**{i+1}. {title}**  \n_Description: {description}_  \n_Similarity Score: {score:.4f}")
             st.markdown("---")
     else:
         st.warning("Please enter a search query.")
